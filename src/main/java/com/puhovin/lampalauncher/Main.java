@@ -17,7 +17,7 @@ public class Main {
     public static void main(String[] args) {
         AppLifecycleManager lifecycleManager = null;
         try {
-            LogSetup.init();
+            LoggerSetup.init();
             Config config = ConfigLoader.load("config.properties");
 
             lifecycleManager = new AppLifecycleManager(config);
