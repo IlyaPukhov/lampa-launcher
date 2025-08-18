@@ -1,16 +1,12 @@
 package com.puhovin.lampalauncher;
 
 import com.puhovin.lampalauncher.config.Config;
-import com.puhovin.lampalauncher.process.LampaProcess;
-import com.puhovin.lampalauncher.process.TorrServerDaemon;
+import com.puhovin.lampalauncher.config.ConfigLoader;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.util.Properties;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static java.util.logging.Level.SEVERE;
 
 /**
  * Starts TorrServer, launches Lampa, and shuts down TorrServer after Lampa is closed.
@@ -19,42 +15,20 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
-        Properties props = new Properties();
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            props.load(fis);
-        } catch (IOException e) {
-            return;
-        }
-
-        Config config = new Config(
-                Path.of(props.getProperty("torrserver.path")),
-                Integer.parseInt(props.getProperty("torrserver.port")),
-                Path.of(props.getProperty("lampa.path"))
-        );
-
-        TorrServerDaemon torrServer = new TorrServerDaemon(config);
-        LampaProcess lampa = new LampaProcess(config);
-
+        AppLifecycleManager lifecycleManager = null;
         try {
-            torrServer.start();
-            torrServer.waitForPort(Duration.ofSeconds(10));
+            LogSetup.init();
+            Config config = ConfigLoader.load("config.properties");
 
-            lampa.start();
-            LOGGER.info("Lampa started. Waiting for user to close it...");
-
-            lampa.waitForExit();
-
+            lifecycleManager = new AppLifecycleManager(config);
+            lifecycleManager.start();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.log(Level.SEVERE, "Main thread was interrupted. Exiting.", e);
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "I/O error occurred while starting processes", e);
-        } catch (IllegalStateException e) {
-            LOGGER.log(Level.SEVERE, "Application startup failed", e);
+            LOGGER.log(SEVERE, "Main thread was interrupted. Exiting.", e);
+        } catch (IOException | IllegalStateException e) {
+            LOGGER.log(SEVERE, "Application startup failed", e);
         } finally {
-            lampa.stop();
-            torrServer.stop();
-            LOGGER.info("All processes stopped. Application exiting.");
+            if (lifecycleManager != null) lifecycleManager.stop();
         }
     }
 }
