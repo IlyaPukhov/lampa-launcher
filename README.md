@@ -1,6 +1,6 @@
 # Lampa + TorrServer Launcher
 
-This project demonstrates a Java launcher that starts TorrServer as a daemon and then starts Lampa, waiting for the user
+This launcher starts TorrServer as a daemon and then starts Lampa, waiting for the user
 to close it. It logs all activity to a file and handles proper shutdown.
 
 ---
