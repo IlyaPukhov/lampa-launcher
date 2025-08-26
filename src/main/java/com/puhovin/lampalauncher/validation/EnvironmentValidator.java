@@ -2,11 +2,9 @@ package com.puhovin.lampalauncher.validation;
 
 import com.puhovin.lampalauncher.config.Config;
 import com.puhovin.lampalauncher.exception.EnvironmentValidationException;
+import com.puhovin.lampalauncher.utils.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -25,58 +23,38 @@ public record EnvironmentValidator(Config config) {
         log.info("Validating environment...");
 
         validateExecutables();
-        validatePorts();
+        validatePortAvailable();
         validatePermissions();
 
         log.info("Environment validation completed successfully");
     }
 
-    public boolean isPortInUse(int port) {
-        try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress("127.0.0.1", port), 1000);
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
     private void validateExecutables() throws EnvironmentValidationException {
-        Path torrServerPath = config.torrServerPath();
-        if (!Files.exists(torrServerPath)) {
-            throw new EnvironmentValidationException("TorrServer executable not found: " + torrServerPath);
-        }
-
-        if (!Files.isExecutable(torrServerPath)) {
-            throw new EnvironmentValidationException("TorrServer file is not executable: " + torrServerPath);
-        }
-
-        Path lampaPath = config.lampaPath();
-        if (!Files.exists(lampaPath)) {
-            throw new EnvironmentValidationException("Lampa executable not found: " + lampaPath);
-        }
-
-        if (!Files.isExecutable(lampaPath)) {
-            throw new EnvironmentValidationException("Lampa file is not executable: " + lampaPath);
-        }
-
+        validateExecutable(config.torrServerPath(), "TorrServer");
+        validateExecutable(config.lampaPath(), "Lampa");
         log.debug("Executables validation passed");
     }
 
-    private void validatePorts() throws EnvironmentValidationException {
-        int port = config.torrServerPort();
-        if (isPortInUse(port)) {
-            throw new EnvironmentValidationException("Port already in use: " + port);
+    private void validateExecutable(Path path, String name) throws EnvironmentValidationException {
+        if (!Files.exists(path)) {
+            throw new EnvironmentValidationException(name + " executable not found: " + path);
         }
+        if (!Files.isExecutable(path)) {
+            throw new EnvironmentValidationException(name + " file is not executable: " + path);
+        }
+    }
 
-        log.debug("Port {} is available", port);
+    private void validatePortAvailable() throws EnvironmentValidationException {
+        if (HttpUtils.isPortAvailable("127.0.0.1", config.torrServerPort(), 1000)) {
+            throw new EnvironmentValidationException("Port already in use: " + config.torrServerPort());
+        }
+        log.debug("Port {} is available", config.torrServerPort());
     }
 
     private void validatePermissions() throws EnvironmentValidationException {
-        Path currentDir = Path.of(".");
-        if (!Files.isWritable(currentDir)) {
+        if (!Files.isWritable(Path.of("."))) {
             throw new EnvironmentValidationException("No write permissions in current directory");
         }
-
         log.debug("Permissions validation passed");
     }
 }

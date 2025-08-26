@@ -6,6 +6,7 @@ import com.puhovin.lampalauncher.exception.TorrServerException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.stream.Stream;
 
 /**
  * Manages Lampa and TorrServer processes.
@@ -24,7 +25,12 @@ public class ProcessManager {
         this.lampa = new LampaProcess(config);
     }
 
-    public void startTorrServer() throws TorrServerException {
+    public void startAll() throws TorrServerException, LampaLaunchException {
+        startTorrServer();
+        startLampa();
+    }
+
+    private void startTorrServer() throws TorrServerException {
         log.info("Starting TorrServer...");
         try {
             torrServer.start();
@@ -32,11 +38,11 @@ public class ProcessManager {
             torrServer.waitForPort(timeout);
             log.info("TorrServer is up");
         } catch (Exception e) {
-            throw new TorrServerException("Failed to start or wait for TorrServer", e);
+            throw new TorrServerException("Failed to start TorrServer", e);
         }
     }
 
-    public void startLampa() throws LampaLaunchException {
+    private void startLampa() throws LampaLaunchException {
         log.info("Starting Lampa...");
         try {
             lampa.start();
@@ -49,19 +55,14 @@ public class ProcessManager {
         lampa.waitForExit();
     }
 
-    /**
-     * Requests processes to stop politely. Does not forcibly kill them.
-     */
     public void shutdown() {
-        stopProcess(lampa, "Lampa");
-        stopProcess(torrServer, "TorrServer");
+        Stream.of(lampa, torrServer)
+                .filter(ManagedProcess::isAlive)
+                .forEach(process -> {
+                    String name = process.getClass().getSimpleName();
+                    log.info("Stopping {}", name);
+                    process.stop();
+                });
         log.info("Shutdown sequence finished");
-    }
-
-    private void stopProcess(ManagedProcess proc, String name) {
-        if (proc.isAlive()) {
-            log.info("Stopping {} (requested)", name);
-            proc.stop();
-        }
     }
 }

@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>Loads configuration</li>
  *   <li>Validates the environment</li>
  *   <li>Starts TorrServer and Lampa via ProcessManager</li>
- *   <li>Waits for Lampa exit and performs graceful shutdown</li>
+ *   <li>Waits for Lampa exit and performs shutdown</li>
  * </ul>
  */
 @Slf4j
@@ -26,32 +26,21 @@ public class LampaLauncherApplication {
         ProcessManager processManager = null;
 
         try {
-            // Load config
-            LauncherConfigLoader configLoader = new LauncherConfigLoader();
-            Config config = configLoader.getConfig();
+            Config config = new LauncherConfigLoader().getConfig();
+            new EnvironmentValidator(config).validateEnvironment();
 
-            // Validate environment
-            EnvironmentValidator validator = new EnvironmentValidator(config);
-            validator.validateEnvironment();
-
-            // Start processes
             processManager = new ProcessManager(config);
-            processManager.startTorrServer();
-            processManager.startLampa();
+            processManager.startAll();
 
             log.info("All processes started successfully. Waiting for Lampa to exit...");
 
             processManager.waitForLampaExit();
-
-            log.info("Lampa exited, proceeding to shutdown.");
-            processManager.shutdown();
-
         } catch (LauncherConfigurationException e) {
             log.error("Configuration error: {}", e.getMessage(), e);
-            System.exit(2);
+            System.exit(3);
         } catch (LauncherException e) {
             log.error("Launcher error: {}", e.getMessage(), e);
-            System.exit(3);
+            System.exit(2);
         } catch (Exception e) {
             log.error("Unexpected failure during launcher execution", e);
             System.exit(1);

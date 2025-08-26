@@ -1,6 +1,7 @@
 package com.puhovin.lampalauncher.process;
 
 import com.puhovin.lampalauncher.config.Config;
+import com.puhovin.lampalauncher.utils.HttpUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,16 +25,15 @@ public class TorrServerDaemon implements ManagedProcess {
 
     @Override
     public void start() throws IOException {
-        List<String> command = List.of(
+        ProcessBuilder builder = new ProcessBuilder(
                 config.torrServerPath().toString(),
                 "--port",
                 String.valueOf(config.torrServerPort())
         );
 
-        ProcessBuilder builder = new ProcessBuilder(command);
         builder.redirectInput(ProcessBuilder.Redirect.PIPE);
-        builder.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        builder.redirectError(ProcessBuilder.Redirect.PIPE);
+        builder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+        builder.redirectError(ProcessBuilder.Redirect.DISCARD);
 
         process = builder.start();
 
@@ -63,21 +63,14 @@ public class TorrServerDaemon implements ManagedProcess {
         long deadline = System.nanoTime() + timeout.toNanos();
         int port = config.torrServerPort();
         while (System.nanoTime() < deadline) {
-            if (isPortOpen(port)) {
+            if (HttpUtils.isPortAvailable("127.0.0.1", port, 500)) {
                 log.info("TorrServer port {} is available", port);
                 return;
             }
-            TimeUnit.MILLISECONDS.sleep(500);
+            TimeUnit.MILLISECONDS.sleep(100);
         }
-        throw new IllegalStateException("TorrServer did not open port " + port + " within " + timeout.toSeconds() + "s");
-    }
 
-    private boolean isPortOpen(int port) {
-        try (Socket ignored = new Socket("127.0.0.1", port)) {
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+        throw new IllegalStateException("TorrServer did not open port " + port + " within " + timeout.toSeconds() + "s");
     }
 
     @Override
