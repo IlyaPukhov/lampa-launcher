@@ -1,62 +1,68 @@
 package com.puhovin.lampalauncher;
 
-import com.puhovin.lampalauncher.config.LauncherConfiguration;
+import com.puhovin.lampalauncher.config.Config;
+import com.puhovin.lampalauncher.config.LauncherConfigLoader;
+import com.puhovin.lampalauncher.exception.LauncherConfigurationException;
+import com.puhovin.lampalauncher.exception.LauncherException;
 import com.puhovin.lampalauncher.process.ProcessManager;
 import com.puhovin.lampalauncher.validation.EnvironmentValidator;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Главный класс приложения Lampa Launcher
- * <p>
- * Этот лаунчер:
- * - Запускает TorrServer как демон процесс
- * - Запускает Lampa приложение
- * - Мониторит здоровье процессов
- * - Корректно завершает все процессы при выходе
- * - Логирует всю активность в файл launcher.log
+ * Application entry point for Lampa Launcher.
+ *
+ * <p>This class:
+ * <ul>
+ *   <li>Loads configuration</li>
+ *   <li>Validates the environment</li>
+ *   <li>Starts TorrServer and Lampa via ProcessManager</li>
+ *   <li>Waits for Lampa exit and performs graceful shutdown</li>
+ * </ul>
  */
 @Slf4j
 public class LampaLauncherApplication {
 
-    private LauncherConfiguration config;
-    private EnvironmentValidator validator;
-    private ProcessManager processManager;
-
     public static void main(String[] args) {
-        initializeComponents();
+        ProcessManager processManager = null;
 
-        runLauncher();
-    }
-
-    private void initializeComponents() throws Exception {
-        log.info("Initializing Lampa Launcher...");
-
-        config = new LauncherConfiguration();
-        validator = new EnvironmentValidator(config);
-        processManager = new ProcessManager(config, validator);
-        healthMonitor = new HealthMonitor(config, processManager);
-    }
-
-    private void runLauncher() {
         try {
-            log.info("Starting Lampa Launcher...");
+            // Load config
+            LauncherConfigLoader configLoader = new LauncherConfigLoader();
+            Config config = configLoader.getConfig();
 
-            // Валидация окружения
+            // Validate environment
+            EnvironmentValidator validator = new EnvironmentValidator(config);
             validator.validateEnvironment();
 
-            // Запуск TorrServer
+            // Start processes
+            processManager = new ProcessManager(config);
             processManager.startTorrServer();
-
-            // Запуск Lampa
             processManager.startLampa();
 
-            log.info("All processes started successfully");
+            log.info("All processes started successfully. Waiting for Lampa to exit...");
 
-            // Ожидание завершения Lampa
             processManager.waitForLampaExit();
 
+            log.info("Lampa exited, proceeding to shutdown.");
+            processManager.shutdown();
+
+        } catch (LauncherConfigurationException e) {
+            log.error("Configuration error: {}", e.getMessage(), e);
+            System.exit(2);
+        } catch (LauncherException e) {
+            log.error("Launcher error: {}", e.getMessage(), e);
+            System.exit(3);
         } catch (Exception e) {
-            log.error("Launcher execution failed", e);
+            log.error("Unexpected failure during launcher execution", e);
+            System.exit(1);
+        } finally {
+            if (processManager != null) {
+                try {
+                    processManager.shutdown();
+                } catch (Exception e) {
+                    log.warn("Error during final shutdown: {}", e.getMessage(), e);
+                }
+            }
         }
     }
 }

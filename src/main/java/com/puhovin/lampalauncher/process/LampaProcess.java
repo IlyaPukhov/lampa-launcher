@@ -1,40 +1,49 @@
 package com.puhovin.lampalauncher.process;
 
 import com.puhovin.lampalauncher.config.Config;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
 /**
- * Launches Lampa application and waits until it is closed
+ * Launches the Lampa application.
  */
-public class LampaProcess {
-    private static final Logger LOGGER = Logger.getLogger(LampaProcess.class.getName());
+@Slf4j
+@RequiredArgsConstructor
+public class LampaProcess implements ManagedProcess {
 
     private final Config config;
-    public Process process;
+    private Process process;
 
-    public LampaProcess(Config config) {
-        this.config = config;
-    }
-
+    @Override
     public void start() throws IOException {
         process = new ProcessBuilder(config.lampaPath().toString())
                 .start();
-        LOGGER.info("Lampa started");
+        log.info("Lampa started (pid={})", process.pid());
     }
 
+    @Override
+    public void stop() {
+        if (process != null && process.isAlive()) {
+            process.destroy();
+            log.info("Lampa stopped");
+        }
+    }
+
+    @Override
+    public boolean isAlive() {
+        return process != null && process.isAlive();
+    }
+
+    /**
+     * Blocks until the process exits.
+     *
+     * @throws InterruptedException if interrupted while waiting
+     */
     public void waitForExit() throws InterruptedException {
         if (process != null) {
             process.waitFor();
         }
     }
-
-    public void stop() {
-        if (process != null && process.isAlive()) {
-            process.destroy();
-            LOGGER.info("Lampa stopped");
-        }
-    }
 }
-

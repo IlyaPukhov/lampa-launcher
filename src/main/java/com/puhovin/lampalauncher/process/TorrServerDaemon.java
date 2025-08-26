@@ -1,6 +1,8 @@
 package com.puhovin.lampalauncher.process;
 
 import com.puhovin.lampalauncher.config.Config;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,26 +11,23 @@ import java.net.Socket;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 /**
- * Starts TorrServer as a background daemon and monitors its lifecycle
+ * Launches TorrServer as a background process and monitors its port.
  */
-public class TorrServerDaemon {
-    private static final Logger LOGGER = Logger.getLogger(TorrServerDaemon.class.getName());
+@Slf4j
+@RequiredArgsConstructor
+public class TorrServerDaemon implements ManagedProcess {
 
     private final Config config;
     private Process process;
 
-    public TorrServerDaemon(Config config) {
-        this.config = config;
-    }
-
+    @Override
     public void start() throws IOException {
         List<String> command = List.of(
-                config.torrPath().toString(),
+                config.torrServerPath().toString(),
                 "--port",
-                String.valueOf(config.torrPort())
+                String.valueOf(config.torrServerPort())
         );
 
         ProcessBuilder builder = new ProcessBuilder(command);
@@ -42,7 +41,7 @@ public class TorrServerDaemon {
         consumeStream(process.getInputStream());
         consumeStream(process.getErrorStream());
 
-        LOGGER.info("TorrServer started");
+        log.info("TorrServer started (pid={})", process.pid());
     }
 
     private void consumeStream(InputStream in) {
@@ -57,16 +56,20 @@ public class TorrServerDaemon {
         t.start();
     }
 
+    /**
+     * Waits until the configured port is open or the timeout elapses.
+     */
     public void waitForPort(Duration timeout) throws InterruptedException {
         long deadline = System.nanoTime() + timeout.toNanos();
+        int port = config.torrServerPort();
         while (System.nanoTime() < deadline) {
-            if (isPortOpen(config.torrPort())) {
-                LOGGER.info("TorrServer port " + config.torrPort() + " is available");
+            if (isPortOpen(port)) {
+                log.info("TorrServer port {} is available", port);
                 return;
             }
             TimeUnit.MILLISECONDS.sleep(500);
         }
-        throw new IllegalStateException("TorrServer did not start within " + timeout.toSeconds() + " seconds");
+        throw new IllegalStateException("TorrServer did not open port " + port + " within " + timeout.toSeconds() + "s");
     }
 
     private boolean isPortOpen(int port) {
@@ -77,10 +80,16 @@ public class TorrServerDaemon {
         }
     }
 
+    @Override
     public void stop() {
         if (process != null && process.isAlive()) {
             process.destroy();
-            LOGGER.info("TorrServer stopped");
+            log.info("TorrServer stopped");
         }
+    }
+
+    @Override
+    public boolean isAlive() {
+        return process != null && process.isAlive();
     }
 }
