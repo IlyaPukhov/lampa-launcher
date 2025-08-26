@@ -10,13 +10,13 @@ to close it. It logs all activity to a file and handles proper shutdown.
 1. Build JAR:
 
 ```bash
-gradlew clean build
+gradlew clean shadowJar
 ```
 
 2. Run using `javaw` (no console window):
 
 ```bash
-javaw -jar build/libs/lampa-launcher-1.0.jar
+javaw -jar build/libs/lampa-launcher-2.0.jar
 ```
 
 All logs will be written to `launcher.log` in UTF-8.
