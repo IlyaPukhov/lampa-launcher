@@ -1,17 +1,14 @@
 package com.puhovin.lampalauncher.process;
 
 import com.puhovin.lampalauncher.config.Config;
-import com.puhovin.lampalauncher.utils.HttpUtils;
+import com.puhovin.lampalauncher.utils.NetworkUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Socket;
 import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Launches TorrServer as a background process and monitors its port.
@@ -59,15 +56,14 @@ public class TorrServerDaemon implements ManagedProcess {
     /**
      * Waits until the configured port is open or the timeout elapses.
      */
-    public void waitForPort(Duration timeout) throws InterruptedException {
+    public void waitForPort(Duration timeout) {
         long deadline = System.nanoTime() + timeout.toNanos();
         int port = config.torrServerPort();
         while (System.nanoTime() < deadline) {
-            if (HttpUtils.isPortAvailable("127.0.0.1", port, 500)) {
+            if (NetworkUtils.isPortInUse(port)) {
                 log.info("TorrServer port {} is available", port);
                 return;
             }
-            TimeUnit.MILLISECONDS.sleep(100);
         }
 
         throw new IllegalStateException("TorrServer did not open port " + port + " within " + timeout.toSeconds() + "s");

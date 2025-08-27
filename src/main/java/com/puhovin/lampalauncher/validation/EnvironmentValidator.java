@@ -2,7 +2,7 @@ package com.puhovin.lampalauncher.validation;
 
 import com.puhovin.lampalauncher.config.Config;
 import com.puhovin.lampalauncher.exception.EnvironmentValidationException;
-import com.puhovin.lampalauncher.utils.HttpUtils;
+import com.puhovin.lampalauncher.utils.NetworkUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Files;
@@ -45,7 +45,7 @@ public record EnvironmentValidator(Config config) {
     }
 
     private void validatePortAvailable() throws EnvironmentValidationException {
-        if (HttpUtils.isPortAvailable("127.0.0.1", config.torrServerPort(), 1000)) {
+        if (NetworkUtils.isPortInUse(config.torrServerPort())) {
             throw new EnvironmentValidationException("Port already in use: " + config.torrServerPort());
         }
         log.debug("Port {} is available", config.torrServerPort());
