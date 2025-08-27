@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.puhovin'
-version = '2.0'
+version = '2.1'
 
 repositories {
     mavenCentral()
@@ -47,11 +47,18 @@ test {
 
 shadowJar {
     archiveClassifier.set('with-dependencies')
-    minimize()
+
+    minimize {
+        exclude(dependency('ch.qos.logback:logback-classic'))
+    }
+
+    mergeServiceFiles()
+
     manifest {
         attributes 'Main-Class': application.mainClass
     }
 }
+
 
 wrapper {
     distributionType = Wrapper.DistributionType.BIN
