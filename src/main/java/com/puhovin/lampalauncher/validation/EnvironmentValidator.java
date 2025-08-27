@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Validates that the environment has required executables, ports and permissions.

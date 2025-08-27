@@ -11,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -21,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -99,6 +99,12 @@ class ProcessManagerTest {
         doReturn(false).when(lampa).isAlive();
 
         processManager.shutdown();
+
+        verify(torrServer).isAlive();
+        verify(lampa).isAlive();
+
+        verify(torrServer, never()).stop();
+        verify(lampa, never()).stop();
     }
 
     @Test
@@ -114,14 +120,9 @@ class ProcessManagerTest {
         try {
             Field field = ProcessManager.class.getDeclaredField(fieldName);
             field.setAccessible(true);
-
-            Field modifiersField = Field.class.getDeclaredField("modifiers");
-            modifiersField.setAccessible(true);
-            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
             field.set(target, value);
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to inject mock into field: " + fieldName, e);
         }
     }
 }
