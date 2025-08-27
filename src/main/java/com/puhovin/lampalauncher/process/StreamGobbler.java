@@ -1,6 +1,5 @@
 package com.puhovin.lampalauncher.process;
 
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 
@@ -13,30 +12,27 @@ import java.io.InputStreamReader;
  * Reads process output and logs lines via SLF4J.
  * Uses MDC to separate logs per process (and stdout/stderr).
  */
-@RequiredArgsConstructor
-public class StreamGobbler implements Runnable {
-
-    private final InputStream in;
-    private final Logger logger;
-    private final String processName;
-    private final boolean isError;
+public record StreamGobbler(
+        InputStream inputStream,
+        Logger logger,
+        String processName,
+        String streamType
+) implements Runnable {
 
     @Override
     public void run() {
-        MDC.put("process", processName + (isError ? "-err" : "-out"));
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            MDC.put("process", processName);
+            MDC.put("stream", streamType);
+
             String line;
             while ((line = reader.readLine()) != null) {
-                if (isError) {
-                    logger.warn(line);
-                } else {
-                    logger.info(line);
-                }
+                logger.info(line);
             }
         } catch (IOException e) {
-            logger.debug("StreamGobbler for {} stopped: {}", processName, e.getMessage());
+            logger.error("Error reading process stream", e);
         } finally {
-            MDC.remove("process");
+            MDC.clear();
         }
     }
 }

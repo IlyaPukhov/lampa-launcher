@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 
 /**
- * Launches the Lampa application.
+ * Manages Lampa external process.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -18,14 +18,25 @@ public class LampaProcess implements ManagedProcess {
 
     @Override
     public void start() throws IOException {
-        process = new ProcessBuilder(config.lampaPath().toString())
-                .start();
+        if (process != null && process.isAlive()) {
+            log.warn("Lampa already running");
+            return;
+        }
+
+        ProcessBuilder processBuilder = new ProcessBuilder(config.lampaPath().toString());
+        processBuilder.redirectErrorStream(false);
+
+        log.info("Starting Lampa...");
+        process = processBuilder.start();
         log.info("Lampa started (pid={})", process.pid());
+
+        attachProcessStreamReaders(process, log, "lampa");
     }
 
     @Override
     public void stop() {
         if (process != null && process.isAlive()) {
+            log.info("Stopping Lampa...");
             process.destroy();
             log.info("Lampa stopped");
         }

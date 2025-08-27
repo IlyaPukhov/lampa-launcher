@@ -16,12 +16,12 @@ import java.util.stream.Stream;
 public class ProcessManager {
 
     private final Config config;
-    private final TorrServerDaemon torrServer;
+    private final TorrServerDaemonProcess torrServer;
     private final LampaProcess lampa;
 
     public ProcessManager(Config config) {
         this.config = config;
-        this.torrServer = new TorrServerDaemon(config);
+        this.torrServer = new TorrServerDaemonProcess(config);
         this.lampa = new LampaProcess(config);
     }
 

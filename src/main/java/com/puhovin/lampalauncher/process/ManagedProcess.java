@@ -27,8 +27,8 @@ public interface ManagedProcess {
      * @param name    process name (used for log discrimination)
      */
     default void attachProcessStreamReaders(Process process, Logger logger, String name) {
-        EXECUTOR.submit(new StreamGobbler(process.getInputStream(), logger, name, false)); // stdout
-        EXECUTOR.submit(new StreamGobbler(process.getErrorStream(), logger, name, true));  // stderr
+        EXECUTOR.submit(new StreamGobbler(process.getInputStream(), logger, name, "out"));
+        EXECUTOR.submit(new StreamGobbler(process.getErrorStream(), logger, name, "err"));
     }
 
     /**

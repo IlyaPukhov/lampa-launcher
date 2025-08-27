@@ -24,38 +24,46 @@
         </triggeringPolicy>
     </appender>
 
-    <!-- Per-process appender via MDC['process'] -->
-    <siftingAppender name="PROCESS_SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+    <!-- Per-process appender via MDC['process'] and MDC['stream'] -->
+    <siftingAppender name="PROCESS_ROUTER" class="ch.qos.logback.classic.sift.SiftingAppender">
         <discriminator class="ch.qos.logback.classic.sift.MDCBasedDiscriminator">
             <key>process</key>
             <defaultValue>unknown</defaultValue>
         </discriminator>
         <sift>
-            <appender name="PROCESS-${process}" class="ch.qos.logback.core.rolling.RollingFileAppender">
-                <file>${LOG_DIR}/${process}.log</file>
-                <encoder>
-                    <pattern>${LOG_PATTERN}</pattern>
-                    <charset>UTF-8</charset>
-                </encoder>
-                <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-                    <fileNamePattern>${LOG_DIR}/${process}.%i.log</fileNamePattern>
-                    <minIndex>1</minIndex>
-                    <maxIndex>1</maxIndex>
-                </rollingPolicy>
-                <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-                    <maxFileSize>10MB</maxFileSize>
-                </triggeringPolicy>
-            </appender>
+            <siftingAppender name="STREAM_ROUTER" class="ch.qos.logback.classic.sift.SiftingAppender">
+                <discriminator class="ch.qos.logback.classic.sift.MDCBasedDiscriminator">
+                    <key>stream</key>
+                    <defaultValue>out</defaultValue>
+                </discriminator>
+                <sift>
+                    <appender name="${process}-${stream}" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                        <file>${LOG_DIR}/${process}/${stream}.log</file>
+                        <encoder>
+                            <pattern>${LOG_PATTERN}</pattern>
+                            <charset>UTF-8</charset>
+                        </encoder>
+                        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+                            <fileNamePattern>${LOG_DIR}/${process}/${stream}.%i.log</fileNamePattern>
+                            <minIndex>1</minIndex>
+                            <maxIndex>1</maxIndex>
+                        </rollingPolicy>
+                        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+                            <maxFileSize>10MB</maxFileSize>
+                        </triggeringPolicy>
+                    </appender>
+                </sift>
+            </siftingAppender>
         </sift>
     </siftingAppender>
 
-    <!-- Launcher package goes only to its appender -->
+    <!-- Launcher logs -->
     <logger name="com.puhovin.lampalauncher" level="${LOG_LEVEL}" additivity="false">
-        <appender-ref ref="LAUNCHER" />
+        <appender-ref ref="LAUNCHER"/>
     </logger>
 
-    <!-- Root only routes child processes -->
+    <!-- Root only for child processes -->
     <root level="${LOG_LEVEL}">
-        <appender-ref ref="PROCESS_SIFT" />
+        <appender-ref ref="PROCESS_ROUTER"/>
     </root>
 </configuration>
