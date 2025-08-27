@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Load properties from external file in working directory (must be present) -->
+    <property file="launcher.properties" />
+
+    <!-- Defaults (can be overridden by launcher.properties) -->
+    <property name="LOG_FILE" value="${logging.file:-launcher.log}" />
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n" />
+    <property name="LOG_LEVEL" value="${logging.level:-INFO}" />
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${LOG_FILE}.%i</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>1</maxIndex>
+        </rollingPolicy>
+
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>10MB</maxFileSize>
+        </triggeringPolicy>
+
+        <append>true</append>
+    </appender>
+
+    <logger name="org.slf4j" level="WARN" />
+    <logger name="ch.qos.logback" level="WARN" />
+    <logger name="picocli" level="WARN" />
+
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>
