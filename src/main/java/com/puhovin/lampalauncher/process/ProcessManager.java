@@ -2,7 +2,7 @@ package com.puhovin.lampalauncher.process;
 
 import com.puhovin.lampalauncher.config.Config;
 import com.puhovin.lampalauncher.exception.LampaLaunchException;
-import com.puhovin.lampalauncher.exception.TorrServerException;
+import com.puhovin.lampalauncher.exception.TorrServerLaunchException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -25,12 +25,12 @@ public class ProcessManager {
         this.lampa = new LampaProcess(config);
     }
 
-    public void startAll() throws TorrServerException, LampaLaunchException {
+    public void startAll() throws TorrServerLaunchException, LampaLaunchException {
         startTorrServer();
         startLampa();
     }
 
-    private void startTorrServer() throws TorrServerException {
+    private void startTorrServer() throws TorrServerLaunchException {
         log.info("Starting TorrServer...");
         try {
             torrServer.start();
@@ -38,7 +38,7 @@ public class ProcessManager {
             torrServer.waitForPort(timeout);
             log.info("TorrServer is up");
         } catch (Exception e) {
-            throw new TorrServerException("Failed to start TorrServer", e);
+            throw new TorrServerLaunchException("Failed to start TorrServer", e);
         }
     }
 
