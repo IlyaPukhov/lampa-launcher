@@ -2,7 +2,7 @@ package com.puhovin.lampalauncher.process;
 
 import com.puhovin.lampalauncher.config.Config;
 import com.puhovin.lampalauncher.exception.LampaLaunchException;
-import com.puhovin.lampalauncher.exception.TorrServerException;
+import com.puhovin.lampalauncher.exception.TorrServerLaunchException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,7 +65,7 @@ class ProcessManagerTest {
         doThrow(new IOException("Failed to start")).when(torrServer).start();
 
         assertThatThrownBy(() -> processManager.startAll())
-                .isInstanceOf(TorrServerException.class)
+                .isInstanceOf(TorrServerLaunchException.class)
                 .hasMessageContaining("Failed to start TorrServer");
     }
 
