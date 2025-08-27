@@ -16,7 +16,11 @@ public interface ManagedProcess {
     /**
      * Shared executor for background stream readers of all managed processes.
      */
-    ExecutorService EXECUTOR = Executors.newCachedThreadPool();
+    ExecutorService EXECUTOR = Executors.newCachedThreadPool(r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    });
 
     /**
      * Attaches asynchronous readers to process stdout and stderr streams.
