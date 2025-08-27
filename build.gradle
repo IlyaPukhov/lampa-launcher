@@ -27,8 +27,10 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
+    testImplementation 'org.junit.platform:junit-platform-launcher:1.13.4'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.19.0'
+    testImplementation 'org.assertj:assertj-core:3.27.4'
     testImplementation 'org.mockito:mockito-core:5.19.0'
-    testImplementation 'org.awaitility:awaitility:4.3.0'
 }
 
 application {
@@ -39,7 +41,7 @@ test {
     useJUnitPlatform()
 
     testLogging {
-        events "PASSED", "FAILED", "SKIPPED"
+        events 'PASSED', 'FAILED', 'SKIPPED'
     }
 }
 

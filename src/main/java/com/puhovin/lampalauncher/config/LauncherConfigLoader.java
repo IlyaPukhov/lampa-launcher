@@ -18,37 +18,34 @@ import java.util.Properties;
 @Slf4j
 public class LauncherConfigLoader {
 
-    private static final String CONFIG_FILE = "./launcher.properties";
 
     private final Properties properties;
 
-    public LauncherConfigLoader() throws LauncherConfigurationException {
-        this.properties = loadProperties();
+    public LauncherConfigLoader(Path configFilePath) throws LauncherConfigurationException {
+        this.properties = loadProperties(configFilePath);
     }
 
-    private Properties loadProperties() throws LauncherConfigurationException {
-        Path p = Paths.get(CONFIG_FILE);
-
-        if (Files.notExists(p)) {
-            throw new LauncherConfigurationException("Configuration file not found: " + p.toAbsolutePath());
+    private Properties loadProperties(Path configPath) throws LauncherConfigurationException {
+        if (Files.notExists(configPath)) {
+            throw new LauncherConfigurationException("Configuration file not found: " + configPath.toAbsolutePath());
         }
 
-        try (InputStream input = Files.newInputStream(p)) {
+        try (InputStream input = Files.newInputStream(configPath)) {
             Properties props = new Properties();
             props.load(input);
-            log.info("Configuration loaded successfully from {}", p.toAbsolutePath());
+            log.info("Configuration loaded successfully from {}", configPath.toAbsolutePath());
             return props;
         } catch (IOException e) {
-            throw new LauncherConfigurationException("Failed to load configuration from " + p.toAbsolutePath(), e);
+            throw new LauncherConfigurationException("Failed to load configuration from " + configPath.toAbsolutePath(), e);
         }
     }
 
     public Config getConfig() {
         return new Config(
-                Paths.get(getProperty("torrserver.path", "./torrserver/torrserver.exe")),
+                Path.of(getProperty("torrserver.path", "./torrserver/torrserver.exe")),
                 parseIntProperty("torrserver.port", 8090),
-                Paths.get(getProperty("lampa.path", "./lampa/lampa.exe")),
-                parseIntProperty("torrserver.startup.timeout", 30)
+                parseIntProperty("torrserver.startup-timeout", 30),
+                Path.of(getProperty("lampa.path", "./lampa/lampa.exe"))
         );
     }
 

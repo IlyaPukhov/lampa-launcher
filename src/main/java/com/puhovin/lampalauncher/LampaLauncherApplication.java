@@ -8,6 +8,9 @@ import com.puhovin.lampalauncher.process.ProcessManager;
 import com.puhovin.lampalauncher.validation.EnvironmentValidator;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 /**
  * Application entry point for Lampa Launcher.
  *
@@ -22,11 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LampaLauncherApplication {
 
+    private static final Path CONFIG_FILE = Path.of("./launcher.properties");
+
     public static void main(String[] args) {
         ProcessManager processManager = null;
 
         try {
-            Config config = new LauncherConfigLoader().getConfig();
+            Config config = new LauncherConfigLoader(CONFIG_FILE).getConfig();
             new EnvironmentValidator(config).validateEnvironment();
 
             processManager = new ProcessManager(config);

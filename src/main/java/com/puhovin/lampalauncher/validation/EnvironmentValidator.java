@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Validates that the environment has required executables, ports and permissions.
@@ -22,9 +23,9 @@ public record EnvironmentValidator(Config config) {
     public void validateEnvironment() throws EnvironmentValidationException {
         log.info("Validating environment...");
 
-        validateExecutables();
-        validatePortAvailable();
         validatePermissions();
+        validateExecutables();
+        validatePortAvailable(config.torrServerPort());
 
         log.info("Environment validation completed successfully");
     }
@@ -36,7 +37,7 @@ public record EnvironmentValidator(Config config) {
     }
 
     private void validateExecutable(Path path, String name) throws EnvironmentValidationException {
-        if (!Files.exists(path)) {
+        if (Files.notExists(path)) {
             throw new EnvironmentValidationException(name + " executable not found: " + path);
         }
         if (!Files.isExecutable(path)) {
@@ -44,11 +45,11 @@ public record EnvironmentValidator(Config config) {
         }
     }
 
-    private void validatePortAvailable() throws EnvironmentValidationException {
-        if (NetworkUtils.isPortInUse(config.torrServerPort())) {
-            throw new EnvironmentValidationException("Port already in use: " + config.torrServerPort());
+    private void validatePortAvailable(int port) throws EnvironmentValidationException {
+        if (NetworkUtils.isPortInUse(port)) {
+            throw new EnvironmentValidationException("Port already in use: " + port);
         }
-        log.debug("Port {} is available", config.torrServerPort());
+        log.debug("Port {} is available", port);
     }
 
     private void validatePermissions() throws EnvironmentValidationException {

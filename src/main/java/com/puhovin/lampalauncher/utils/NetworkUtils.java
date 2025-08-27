@@ -11,12 +11,16 @@ public final class NetworkUtils {
 
     private NetworkUtils() {}
 
-    public static boolean isPortInUse(int port) {
+    public static boolean isPortInUse(String host, int port, int timeoutMs) {
         try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(HOST, port), TIMEOUT_MS);
+            socket.connect(new InetSocketAddress(host, port), timeoutMs);
             return true;
         } catch (IOException e) {
             return false;
         }
+    }
+
+    public static boolean isPortInUse(int port) {
+        return isPortInUse(HOST, port, TIMEOUT_MS);
     }
 }
