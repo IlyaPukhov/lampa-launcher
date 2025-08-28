@@ -36,7 +36,7 @@ class TorrServerDaemonTest {
 
     @Test
     void waitForPort_portBecomesAvailable_noExceptionThrown() {
-        TorrServerDaemon daemon = new TorrServerDaemon(config);
+        TorrServerDaemonProcess torrServerDaemon = new TorrServerDaemonProcess(config);
 
         try (var networkUtils = mockStatic(NetworkUtils.class)) {
             networkUtils.when(() -> NetworkUtils.isPortInUse(anyInt()))
@@ -45,20 +45,20 @@ class TorrServerDaemonTest {
                     .thenReturn(true);
 
             assertThatNoException().isThrownBy(() ->
-                    daemon.waitForPort(Duration.ofSeconds(5))
+                    torrServerDaemon.waitForPort(Duration.ofSeconds(5))
             );
         }
     }
 
     @Test
     void waitForPort_portNeverAvailable_throwsException() {
-        TorrServerDaemon daemon = new TorrServerDaemon(config);
+        TorrServerDaemonProcess torrServerDaemon = new TorrServerDaemonProcess(config);
 
         try (var networkUtils = mockStatic(NetworkUtils.class)) {
             networkUtils.when(() -> NetworkUtils.isPortInUse(anyInt())).thenReturn(false);
 
             Duration timeout = Duration.ofMillis(100);
-            assertThatThrownBy(() -> daemon.waitForPort(timeout))
+            assertThatThrownBy(() -> torrServerDaemon.waitForPort(timeout))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("did not open port");
         }
@@ -73,9 +73,9 @@ class TorrServerDaemonTest {
             doReturn(InputStream.nullInputStream()).when(mockProcess).getErrorStream();
         })) {
 
-            TorrServerDaemon daemon = new TorrServerDaemon(config);
+            TorrServerDaemonProcess torrServerDaemon = new TorrServerDaemonProcess(config);
 
-            assertThatNoException().isThrownBy(daemon::start);
+            assertThatNoException().isThrownBy(torrServerDaemon::start);
             assertThat(mocked.constructed()).hasSize(1);
             verify(mocked.constructed().getFirst()).start();
         }
@@ -95,19 +95,19 @@ class TorrServerDaemonTest {
             doReturn(true).when(mockProcess).isAlive();
         })) {
 
-            TorrServerDaemon daemon = new TorrServerDaemon(config);
-            daemon.start();
+            TorrServerDaemonProcess torrServerDaemon = new TorrServerDaemonProcess(config);
+            torrServerDaemon.start();
 
-            assertThatNoException().isThrownBy(daemon::stop);
+            assertThatNoException().isThrownBy(torrServerDaemon::stop);
             verify(processRef.get(), times(1)).destroy();
         }
     }
 
     @Test
     void isAlive_processNotStarted_returnsFalse() {
-        TorrServerDaemon daemon = new TorrServerDaemon(config);
+        TorrServerDaemonProcess torrServerDaemon = new TorrServerDaemonProcess(config);
 
-        boolean result = daemon.isAlive();
+        boolean result = torrServerDaemon.isAlive();
 
         assertThat(result).isFalse();
     }
@@ -118,9 +118,9 @@ class TorrServerDaemonTest {
                 doThrow(new IOException("Cannot start")).when(builderMock).start()
         )) {
 
-            TorrServerDaemon daemon = new TorrServerDaemon(config);
+            TorrServerDaemonProcess torrServerDaemon = new TorrServerDaemonProcess(config);
 
-            assertThatThrownBy(daemon::start)
+            assertThatThrownBy(torrServerDaemon::start)
                     .isInstanceOf(IOException.class)
                     .hasMessageContaining("Cannot start");
         }

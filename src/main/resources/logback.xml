@@ -1,40 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!-- Load properties from external file in working directory (must be present) -->
     <property file="launcher.properties" />
 
-    <!-- Defaults (can be overridden by launcher.properties) -->
-    <property name="LOG_FILE" value="${logging.file:-launcher.log}" />
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n" />
+    <property name="LOG_DIR" value="${logging.dir:-logs}" />
     <property name="LOG_LEVEL" value="${logging.level:-INFO}" />
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n" />
 
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_FILE}</file>
-
+    <appender name="LAUNCHER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/launcher.log</file>
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
             <charset>UTF-8</charset>
         </encoder>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <fileNamePattern>${LOG_FILE}.%i</fileNamePattern>
-            <minIndex>1</minIndex>
-            <maxIndex>1</maxIndex>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/launcher.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
         </rollingPolicy>
-
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>10MB</maxFileSize>
-        </triggeringPolicy>
-
-        <append>true</append>
     </appender>
 
-    <logger name="org.slf4j" level="WARN" />
-    <logger name="ch.qos.logback" level="WARN" />
-    <logger name="picocli" level="WARN" />
+    <appender name="TORRSERVER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/torrserver.log</file>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/torrserver.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
 
-    <root level="${LOG_LEVEL}">
-        <appender-ref ref="FILE" />
+    <appender name="LAMPA" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/lampa.log</file>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/lampa.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <logger name="com.puhovin.lampalauncher" level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="LAUNCHER" />
+    </logger>
+
+    <logger name="process.torrserver" level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="TORRSERVER" />
+    </logger>
+
+    <logger name="process.lampa" level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="LAMPA" />
+    </logger>
+
+    <root level="WARN">
+        <appender-ref ref="LAUNCHER" />
     </root>
+
 </configuration>

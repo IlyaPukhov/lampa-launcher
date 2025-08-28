@@ -6,52 +6,33 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Launches TorrServer as a background process and monitors its port.
+ * Manages TorrServer external daemon.
  */
 @Slf4j
 @RequiredArgsConstructor
-public class TorrServerDaemon implements ManagedProcess {
+public class TorrServerDaemonProcess implements ManagedProcess {
 
     private final Config config;
     private Process process;
 
     @Override
     public void start() throws IOException {
-        ProcessBuilder builder = new ProcessBuilder(
+        ProcessBuilder processBuilder = new ProcessBuilder(
                 config.torrServerPath().toString(),
                 "--port",
                 String.valueOf(config.torrServerPort())
         );
+        processBuilder.redirectErrorStream(false);
 
-        builder.redirectInput(ProcessBuilder.Redirect.PIPE);
-        builder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-        builder.redirectError(ProcessBuilder.Redirect.DISCARD);
-
-        process = builder.start();
-
-        // consume output in background threads to avoid blocking
-        consumeStream(process.getInputStream());
-        consumeStream(process.getErrorStream());
-
+        log.info("Starting TorrServer...");
+        process = processBuilder.start();
         log.info("TorrServer started (pid={})", process.pid());
-    }
 
-    private void consumeStream(InputStream in) {
-        Thread t = new Thread(() -> {
-            try {
-                in.transferTo(OutputStream.nullOutputStream());
-            } catch (IOException ignored) {
-                // ignore
-            }
-        });
-        t.setDaemon(true);
-        t.start();
+        attachProcessStreamReaders(process, "torrserver");
     }
 
     /**
@@ -74,6 +55,7 @@ public class TorrServerDaemon implements ManagedProcess {
     @Override
     public void stop() {
         if (process != null && process.isAlive()) {
+            log.info("Stopping TorrServer...");
             process.destroy();
             log.info("TorrServer stopped");
         }

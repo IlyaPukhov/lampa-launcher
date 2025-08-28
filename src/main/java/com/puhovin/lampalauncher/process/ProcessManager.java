@@ -16,12 +16,12 @@ import java.util.stream.Stream;
 public class ProcessManager {
 
     private final Config config;
-    private final TorrServerDaemon torrServer;
+    private final TorrServerDaemonProcess torrServer;
     private final LampaProcess lampa;
 
     public ProcessManager(Config config) {
         this.config = config;
-        this.torrServer = new TorrServerDaemon(config);
+        this.torrServer = new TorrServerDaemonProcess(config);
         this.lampa = new LampaProcess(config);
     }
 
@@ -31,7 +31,6 @@ public class ProcessManager {
     }
 
     private void startTorrServer() throws TorrServerLaunchException {
-        log.info("Starting TorrServer...");
         try {
             torrServer.start();
             Duration timeout = Duration.ofSeconds(config.torrServerStartupTimeout());
@@ -43,7 +42,6 @@ public class ProcessManager {
     }
 
     private void startLampa() throws LampaLaunchException {
-        log.info("Starting Lampa...");
         try {
             lampa.start();
         } catch (Exception e) {
@@ -58,11 +56,7 @@ public class ProcessManager {
     public void shutdown() {
         Stream.of(lampa, torrServer)
                 .filter(ManagedProcess::isAlive)
-                .forEach(process -> {
-                    String name = process.getClass().getSimpleName();
-                    log.info("Stopping {}", name);
-                    process.stop();
-                });
+                .forEach(ManagedProcess::stop);
         log.info("Shutdown sequence finished");
     }
 }

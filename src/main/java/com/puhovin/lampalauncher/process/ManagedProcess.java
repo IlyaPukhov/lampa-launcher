@@ -1,13 +1,36 @@
 package com.puhovin.lampalauncher.process;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
- * Simple lifecycle contract for managed external processes.
+ * Lifecycle contract for a managed external process.
  * <p>
- * Methods are intentionally minimal: start / stop / isAlive.
+ * Methods are intentionally minimal: start, stop, isAlive.
  */
 public interface ManagedProcess {
+
+    /**
+     * Shared executor for background stream readers of all managed processes.
+     */
+    ExecutorService EXECUTOR = Executors.newCachedThreadPool(r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    });
+
+    /**
+     * Attaches asynchronous readers to process stdout and stderr streams.
+     * Output is redirected to SLF4J logger with per-process markers.
+     *
+     * @param process process to attach readers to
+     * @param name    process name (used for log discrimination)
+     */
+    default void attachProcessStreamReaders(Process process, String name) {
+        EXECUTOR.submit(new StreamGobbler(process.getInputStream(), name, false));
+        EXECUTOR.submit(new StreamGobbler(process.getErrorStream(), name, true));
+    }
 
     /**
      * Starts the process.
@@ -18,14 +41,14 @@ public interface ManagedProcess {
 
     /**
      * Requests the process to stop.
-     * Implementations may attempt to stop the process without killing forcibly.
+     * Implementations should attempt graceful shutdown before forcing termination.
      */
     void stop();
 
     /**
-     * Returns true if the process is currently running.
+     * Checks if the process is currently alive.
      *
-     * @return true if alive, false otherwise
+     * @return {@code true} if the process is alive, {@code false} otherwise
      */
     boolean isAlive();
 }

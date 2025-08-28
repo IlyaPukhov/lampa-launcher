@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
 class ProcessManagerTest {
 
     @Mock
-    private TorrServerDaemon torrServer;
+    private TorrServerDaemonProcess torrServer;
 
     @Mock
     private LampaProcess lampa;

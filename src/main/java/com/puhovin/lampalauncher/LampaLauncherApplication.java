@@ -12,19 +12,14 @@ import java.nio.file.Path;
 
 /**
  * Application entry point for Lampa Launcher.
- *
- * <p>This class:
- * <ul>
- *   <li>Loads configuration</li>
- *   <li>Validates the environment</li>
- *   <li>Starts TorrServer and Lampa via ProcessManager</li>
- *   <li>Waits for Lampa exit and performs shutdown</li>
- * </ul>
+ * <p>
+ * Loads configuration, validates environment, starts TorrServer and Lampa,
+ * waits for Lampa exit, and ensures safe shutdown.
  */
 @Slf4j
 public class LampaLauncherApplication {
 
-    private static final Path CONFIG_FILE = Path.of("./launcher.properties");
+    private static final Path CONFIG_FILE = Path.of("launcher.properties");
 
     public static void main(String[] args) {
         ProcessManager processManager = null;
@@ -37,8 +32,8 @@ public class LampaLauncherApplication {
             processManager.startAll();
 
             log.info("All processes started successfully. Waiting for Lampa to exit...");
-
             processManager.waitForLampaExit();
+
         } catch (LauncherConfigurationException e) {
             log.error("Configuration error: {}", e.getMessage(), e);
             System.exit(3);
@@ -49,6 +44,7 @@ public class LampaLauncherApplication {
             log.error("Unexpected failure during launcher execution", e);
             System.exit(1);
         } finally {
+            log.info("Lampa Launcher is shutting down");
             if (processManager != null) {
                 try {
                     processManager.shutdown();
