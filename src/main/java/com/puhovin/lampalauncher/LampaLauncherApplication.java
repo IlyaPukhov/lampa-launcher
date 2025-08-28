@@ -19,7 +19,7 @@ import java.nio.file.Path;
 @Slf4j
 public class LampaLauncherApplication {
 
-    private static final Path CONFIG_FILE = Path.of("./launcher.properties");
+    private static final Path CONFIG_FILE = Path.of("launcher.properties");
 
     public static void main(String[] args) {
         ProcessManager processManager = null;
@@ -44,6 +44,7 @@ public class LampaLauncherApplication {
             log.error("Unexpected failure during launcher execution", e);
             System.exit(1);
         } finally {
+            log.info("Lampa Launcher is shutting down");
             if (processManager != null) {
                 try {
                     processManager.shutdown();

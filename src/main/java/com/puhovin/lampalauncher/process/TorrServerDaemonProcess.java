@@ -21,11 +21,6 @@ public class TorrServerDaemonProcess implements ManagedProcess {
 
     @Override
     public void start() throws IOException {
-        if (process != null && process.isAlive()) {
-            log.warn("TorrServer already running");
-            return;
-        }
-
         ProcessBuilder processBuilder = new ProcessBuilder(
                 config.torrServerPath().toString(),
                 "--port",
@@ -37,7 +32,7 @@ public class TorrServerDaemonProcess implements ManagedProcess {
         process = processBuilder.start();
         log.info("TorrServer started (pid={})", process.pid());
 
-        attachProcessStreamReaders(process, log, "torrserver");
+        attachProcessStreamReaders(process, "torrserver");
     }
 
     /**

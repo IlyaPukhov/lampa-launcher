@@ -1,7 +1,5 @@
 package com.puhovin.lampalauncher.process;
 
-import org.slf4j.Logger;
-
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,12 +25,11 @@ public interface ManagedProcess {
      * Output is redirected to SLF4J logger with per-process markers.
      *
      * @param process process to attach readers to
-     * @param logger  logger instance to use
      * @param name    process name (used for log discrimination)
      */
-    default void attachProcessStreamReaders(Process process, Logger logger, String name) {
-        EXECUTOR.submit(new StreamGobbler(process.getInputStream(), logger, name, "out"));
-        EXECUTOR.submit(new StreamGobbler(process.getErrorStream(), logger, name, "err"));
+    default void attachProcessStreamReaders(Process process, String name) {
+        EXECUTOR.submit(new StreamGobbler(process.getInputStream(), name, false));
+        EXECUTOR.submit(new StreamGobbler(process.getErrorStream(), name, true));
     }
 
     /**

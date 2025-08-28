@@ -18,11 +18,6 @@ public class LampaProcess implements ManagedProcess {
 
     @Override
     public void start() throws IOException {
-        if (process != null && process.isAlive()) {
-            log.warn("Lampa already running");
-            return;
-        }
-
         ProcessBuilder processBuilder = new ProcessBuilder(config.lampaPath().toString());
         processBuilder.redirectErrorStream(false);
 
@@ -30,7 +25,7 @@ public class LampaProcess implements ManagedProcess {
         process = processBuilder.start();
         log.info("Lampa started (pid={})", process.pid());
 
-        attachProcessStreamReaders(process, log, "lampa");
+        attachProcessStreamReaders(process, "lampa");
     }
 
     @Override
